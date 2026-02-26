@@ -1,0 +1,14 @@
+../Core/Src/lcd.c:19:13:LCD_SendNibble	3
+../Core/Src/lcd.c:46:6:LCD_SendCmd	3
+../Core/Src/lcd.c:62:6:LCD_SendData	2
+../Core/Src/lcd.c:74:6:LCD_Init	1
+../Core/Src/lcd.c:101:6:LCD_SendString	2
+../Core/Src/lcd.c:110:6:LCD_Clear	1
+../Core/Src/lcd.c:116:6:LCD_SetCursor	2
+../Core/Src/lcd.c:128:6:LCD_DisplayError	1
+../Core/Src/lcd.c:141:6:LCD_DisplayReading	1
+../Core/Src/lcd.c:169:6:LCD_DisplayAccel	1
+../Core/Src/lcd.c:199:6:LCD_DisplayGyro	1
+../Core/Src/lcd.c:230:6:LCD_DisplayFloat	10
+../Core/Src/lcd.c:303:6:LCD_DisplayAccelScaled	1
+../Core/Src/lcd.c:334:6:LCD_DisplayGyroScaled	1

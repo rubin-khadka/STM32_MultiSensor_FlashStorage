@@ -1,0 +1,15 @@
+../Core/Src/mpu6050.c:18:16:MPU6050_ReadReg	4
+../Core/Src/mpu6050.c:47:16:MPU6050_WriteReg	4
+../Core/Src/mpu6050.c:73:9:MPU6050_Init	4
+../Core/Src/mpu6050.c:105:16:MPU6050_ReadBurst	5
+../Core/Src/mpu6050.c:139:9:MPU6050_ReadAll	2
+../Core/Src/mpu6050.c:162:9:MPU6050_ReadAccel	2
+../Core/Src/mpu6050.c:179:9:MPU6050_ReadGyro	2
+../Core/Src/mpu6050.c:196:9:MPU6050_ReadTemp	2
+../Core/Src/mpu6050.c:211:6:MPU6050_ScaleAll	1
+../Core/Src/mpu6050.c:228:6:MPU6050_ScaleAccel	1
+../Core/Src/mpu6050.c:236:6:MPU6050_ScaleGyro	1
+../Core/Src/mpu6050.c:244:6:MPU6050_ScaleTemp	1
+../Core/Src/mpu6050.c:250:7:MPU6050_ConvertTemp	1
+../Core/Src/mpu6050.c:256:7:MPU6050_ConvertAccel	1
+../Core/Src/mpu6050.c:262:7:MPU6050_ConvertGyro	1

@@ -1,0 +1,10 @@
+../Core/Src/utils.c:11:6:itoa_16	32	static
+../Core/Src/utils.c:41:6:itoa_8	24	static
+../Core/Src/utils.c:72:6:format_value	24	static
+../Core/Src/utils.c:92:6:format_reading	56	static
+../Core/Src/utils.c:141:6:format_accel	48	static
+../Core/Src/utils.c:181:6:format_gyro	48	static
+../Core/Src/utils.c:224:6:ftoa	56	static
+../Core/Src/utils.c:282:6:format_float	48	static
+../Core/Src/utils.c:301:6:format_accel_scaled	56	static
+../Core/Src/utils.c:343:6:format_gyro_scaled	56	static

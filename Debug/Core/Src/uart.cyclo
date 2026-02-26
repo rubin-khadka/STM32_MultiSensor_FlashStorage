@@ -1,0 +1,13 @@
+../Drivers/CMSIS/Include/core_cm3.h:1511:22:__NVIC_EnableIRQ	2
+../Core/Src/uart.c:20:6:USART1_Init	1
+../Core/Src/uart.c:53:6:UART1_BufferInit	1
+../Core/Src/uart.c:62:6:USART1_BufferEmpty	1
+../Core/Src/uart.c:68:6:USART1_BufferFull	1
+../Core/Src/uart.c:74:6:USART1_BufferWrite	2
+../Core/Src/uart.c:93:9:USART1_BufferRead	2
+../Core/Src/uart.c:110:6:USART1_SendChar	2
+../Core/Src/uart.c:127:6:USART1_SendString	2
+../Core/Src/uart.c:136:6:USART1_DataAvailable	1
+../Core/Src/uart.c:142:9:USART1_GetChar	1
+../Core/Src/uart.c:148:6:USART1_SendNumber	4
+../Core/Src/uart.c:174:6:USART1_IRQHandler	6
