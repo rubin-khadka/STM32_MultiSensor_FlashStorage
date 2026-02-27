@@ -1,3 +1,0 @@
-../Core/Src/dwt.c:15:6:DWT_Init	4	static
-../Core/Src/dwt.c:28:6:DWT_Delay_us	24	static
-../Core/Src/dwt.c:37:6:DWT_Delay_ms	16	static

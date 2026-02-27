@@ -1,4 +1,0 @@
-../Core/Src/gpio.c:11:6:LED_Init	1
-../Core/Src/gpio.c:23:6:LED_ON	1
-../Core/Src/gpio.c:28:6:LED_OFF	1
-../Core/Src/gpio.c:33:6:LED_Toggle	1

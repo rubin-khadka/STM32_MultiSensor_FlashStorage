@@ -1,4 +1,0 @@
-../Core/Src/tasks.c:21:6:Task_UART_Output	24	static
-../Core/Src/tasks.c:47:6:Task_DS18B20_Read	16	static
-../Core/Src/tasks.c:67:6:Task_MPU6050_Read	8	static
-../Core/Src/tasks.c:76:6:Task_LCD_Update	16	static

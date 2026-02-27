@@ -1,8 +1,0 @@
-../Core/Src/ds18b20.c:29:6:DS18B20_Init	4	static
-../Core/Src/ds18b20.c:41:5:DS18B20_Reset	16	static
-../Core/Src/ds18b20.c:81:6:DS18B20_WriteBit	16	static
-../Core/Src/ds18b20.c:110:5:DS18B20_ReadBit	16	static
-../Core/Src/ds18b20.c:138:6:DS18B20_WriteByte	24	static
-../Core/Src/ds18b20.c:147:9:DS18B20_ReadByte	16	static
-../Core/Src/ds18b20.c:163:7:DS18B20_ReadTemperature	16	static
-../Core/Src/ds18b20.c:181:6:DS18B20_StartConversion	8	static
