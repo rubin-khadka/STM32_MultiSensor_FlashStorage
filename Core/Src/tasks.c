@@ -14,8 +14,7 @@
 #include "i2c2.h"
 #include "lcd.h"
 #include "ds18b20.h"
-
-static char uart_buf[32];
+#include "w25q64.h"
 
 static char uart_buf[32];
 
@@ -155,7 +154,8 @@ void Task_MPU6050_Read(void)
 // Task to update LCD display
 void Task_LCD_Update(void)
 {
-  if(feedback.active) return;
+  if(feedback.active)
+    return;
   DisplayMode_t mode = Button_GetMode();
 
   switch(mode)
@@ -177,19 +177,4 @@ void Task_LCD_Update(void)
   }
 }
 
-void Task_Button_Status(void)
-{
-  // Handle button 2
-  if(g_button2_pressed)
-  {
-    Feedback_Show("DATA SAVING...", "TAKES 1 Sec", 1000);
-    g_button2_pressed = 0;
-  }
 
-  // Handle button 3
-  if(g_button3_pressed)
-  {
-    Feedback_Show("DATA READING...", "TAKES 1 Sec", 1000);
-    g_button3_pressed = 0;
-  }
-}

@@ -14,7 +14,6 @@ void Task_MPU6050_Read(void);
 void Task_LCD_Update(void);
 void Task_UART_Output(void);
 void Task_DS18B20_Read(void);
-void Task_Button_Status(void);
 
 // Feedback Functions
 void Feedback_Show(const char *line1, const char *line2, uint16_t duration_ms);

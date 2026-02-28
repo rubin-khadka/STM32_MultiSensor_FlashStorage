@@ -4,6 +4,7 @@
 #include "dwt.h"
 #include "lcd.h"
 #include "uart.h"
+#include "stdio.h"
 
 // W25Q64 Commands
 #define W25Q64_CMD_RESET            0x99
@@ -122,6 +123,18 @@ uint8_t W25Q64_ReadStatus(void)
   return status;
 }
 
+uint8_t W25Q64_ReadStatus2(void)
+{
+  uint8_t status;
+
+  SPI1_CS_LOW();
+  SPI1_Transfer(0x35);  // Read status register 2 command
+  status = SPI1_Transfer(0xFF);
+  SPI1_CS_HIGH();
+
+  return status;
+}
+
 void W25Q64_WriteEnable(void)
 {
   uint8_t status;
@@ -223,7 +236,8 @@ uint32_t bytestowrite(uint32_t size, uint16_t offset)
 
 uint8_t W25Q64_EraseSector(uint32_t sector_num)
 {
-  uint32_t memAddr = sector_num * 4096;  // Each sector = 16 pages * 256 bytes = 4096 bytes
+  uint32_t memAddr = sector_num * 4096;
+  uint32_t timeout = 0;
 
   USART1_SendString("Erasing Sector ");
   USART1_SendNumber(sector_num);
@@ -240,19 +254,34 @@ uint8_t W25Q64_EraseSector(uint32_t sector_num)
     return W25Q64_ERROR;
   }
 
-  // Send sector erase command (0x20 for 24-bit addressing)
+  // Send sector erase command
   SPI1_CS_LOW();
+  SPI1_Transfer(W25Q64_CMD_SECTOR_ERASE);
+  SPI1_Transfer((memAddr >> 16) & 0xFF);
+  SPI1_Transfer((memAddr >> 8) & 0xFF);
+  SPI1_Transfer(memAddr & 0xFF);
 
-  SPI1_Transfer(W25Q64_CMD_SECTOR_ERASE);                    // Sector Erase command
-  SPI1_Transfer((memAddr >> 16) & 0xFF);   // Address bits 23-16
-  SPI1_Transfer((memAddr >> 8) & 0xFF);    // Address bits 15-8
-  SPI1_Transfer(memAddr & 0xFF);            // Address bits 7-0
-
-  // Wait for SPI to finish
+  // Wait for SPI to finish sending command
   while(SPI1->SR & SPI_SR_BSY);
-
   SPI1_CS_HIGH();
 
+  // **CRITICAL: Wait for erase to complete by polling status register**
+  USART1_SendString("Waiting for erase to complete...\r\n");
+
+  timeout = 100000;  // Timeout counter
+  do
+  {
+    status = W25Q64_ReadStatus();
+    timeout--;
+    if(timeout == 0)
+    {
+      USART1_SendString("Erase Timeout!\r\n");
+      return W25Q64_ERROR;
+    }
+  }
+  while(status & 0x01);  // Check BUSY bit (bit 0)
+
+  USART1_SendString("Erase Complete!\r\n");
   return W25Q64_OK;
 }
 

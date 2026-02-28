@@ -16,6 +16,7 @@
 void W25Q64_Reset(void);
 void W25Q64_Init(void);
 uint8_t W25Q64_ReadStatus(void);
+uint8_t W25Q64_ReadStatus2(void);
 void W25Q64_WriteEnable(void);
 void W25Q64_WriteDisable(void);
 void W25Q64_Read(uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData);

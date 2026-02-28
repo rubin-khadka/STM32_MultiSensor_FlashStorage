@@ -51,6 +51,14 @@ SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
 
+#define TEST_DATA_SIZE 32
+uint8_t test_write_data[TEST_DATA_SIZE];
+uint8_t test_read_data[TEST_DATA_SIZE];
+
+// Test addresses
+#define TEST_PAGE 10  // Use page 10 for testing
+#define TEST_OFFSET 0
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,7 +71,42 @@ static void MX_SPI1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void Task_Button_Status(void)
+{
+  // Handle button 2
+  if(g_button2_pressed)
+  {
+    Feedback_Show("DATA SAVING...", "TAKES 1 Sec", 1000);
 
+    W25Q64_EraseSector(0);
+    // W25Q64_WritePage(1, 0, TEST_DATA_SIZE, test_write_data);
+
+    g_button2_pressed = 0;
+  }
+
+  // Handle button 3
+  if(g_button3_pressed)
+  {
+    Feedback_Show("DATA READING...", "TAKES 1 Sec", 1000);
+
+    // Read data from flash
+    W25Q64_Read(1, 0, TEST_DATA_SIZE, test_read_data);
+
+    // Send over UART for verification
+    USART1_SendString("\r\n=== Flash Test Read ===\r\n");
+    USART1_SendString("Page 10 Data:\r\n");
+
+    char buffer[50];
+    for(int i = 0; i < TEST_DATA_SIZE; i++)
+    {
+      sprintf(buffer, "[%d] = 0x%02X (%d)\r\n", i, test_read_data[i], test_read_data[i]);
+      USART1_SendString(buffer);
+    }
+    USART1_SendString("=== End ===\r\n");
+
+    g_button3_pressed = 0;
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -125,6 +168,12 @@ int main(void)
   // Add this after W25Q64_Init() in your main function
   W25Q64_Reset();
   W25Q64_Init();
+
+  // Prepare test data
+  for(int i = 0; i < TEST_DATA_SIZE; i++)
+  {
+    test_write_data[i] = i;  // Fill with 0,1,2,3...
+  }
 
   DWT_Delay_ms(2000);
 
