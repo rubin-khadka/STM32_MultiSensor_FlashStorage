@@ -124,39 +124,76 @@ void W25Q64_Init(void)
   }
 }
 
-void W25Q_Read(uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData)
+uint8_t W25Q64_ReadStatus(void)
 {
-  uint8_t tData[5];
+  uint8_t status;
+
+  SPI1_CS_LOW();
+  // Send read status register command (0x05)
+  SPI1_Transfer(W25Q64_CMD_READ_STATUS);  // 0x05
+  // Read status byte
+  status = SPI1_Transfer(0xFF);
+  SPI1_CS_HIGH();
+
+  return status;
+}
+
+void W25Q64_WriteEnable(void)
+{
+  uint8_t status;
+  uint32_t timeout = 1000;
+
+  SPI1_CS_LOW();
+  // Send write enable command (0x06)
+  SPI1_Transfer(W25Q64_CMD_WRITE_ENABLE);  // 0x06
+  SPI1_CS_HIGH();
+
+  USART1_SendString("Checking for status !\r\n");
+  // Verify write enable succeeded (WEL bit should be set)
+  do
+  {
+    status = W25Q64_ReadStatus();
+    timeout--;
+    if(timeout == 0)
+    {
+      // Write enable failed
+      USART1_SendString("Write Enable Timeout!\r\n");
+      break;
+    }
+  }
+  while(!(status & 0x02));  // Wait for WEL bit (bit 1)
+  USART1_SendString("Write Enabled !\r\n");
+}
+
+void W25Q64_WriteDisable(void)
+{
+  SPI1_CS_LOW();
+  SPI1_Transfer(W25Q64_CMD_WRITE_DISABLE);  // 0x04
+  SPI1_CS_HIGH();
+  DWT_Delay_ms(5);
+}
+
+void W25Q64_Read(uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData)
+{
   uint32_t memAddr = (startPage * 256) + offset;
 
-  if(numBLOCK < 512)   // Chip Size<256Mb
+  SPI1_CS_LOW();                    // Pull CS low
+  // Send read command (0x03)
+  SPI1_Transfer(W25Q64_CMD_READ_DATA);
+
+  // Send 24-bit address (MSB first)
+  SPI1_Transfer((memAddr >> 16) & 0xFF);    // Address bits 23-16
+  SPI1_Transfer((memAddr >> 8) & 0xFF);     // Address bits 15-8
+  SPI1_Transfer(memAddr & 0xFF);            // Address bits 7-0
+
+  // Read data bytes
+  for(uint32_t i = 0; i < size; i++)
   {
-    tData[0] = 0x03;  // enable Read
-    tData[1] = (memAddr >> 16) & 0xFF;  // MSB of the memory Address
-    tData[2] = (memAddr >> 8) & 0xFF;
-    tData[3] = (memAddr) & 0xFF; // LSB of the memory Address
-  }
-  else  // we use 32bit memory address for chips >= 256Mb
-  {
-    tData[0] = 0x13;  // Read Data with 4-Byte Address
-    tData[1] = (memAddr >> 24) & 0xFF;  // MSB of the memory Address
-    tData[2] = (memAddr >> 16) & 0xFF;
-    tData[3] = (memAddr >> 8) & 0xFF;
-    tData[4] = (memAddr) & 0xFF; // LSB of the memory Address
+    rData[i] = SPI1_Transfer(0xFF);     // Send dummy byte, read data
   }
 
-  csLOW();  // pull the CS Low
-  if(numBLOCK < 512)
-  {
-    SPI_Write(tData, 4);  // send read instruction along with the 24 bit memory address
-  }
-  else
-  {
-    SPI_Write(tData, 5);  // send read instruction along with the 32 bit memory address
-  }
-
-  SPI_Read(rData, size);  // Read the data
-  csHIGH();  // pull the CS High
+  SPI1_CS_HIGH();                   // Pull CS high
+  DWT_Delay_us(5);                  // Small delay after CS high
 }
 
 void W25Q_FastRead(uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData)
@@ -196,24 +233,6 @@ void W25Q_FastRead(uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *r
   csHIGH();  // pull the CS High
 }
 
-void write_enable(void)
-{
-  uint8_t tData = 0x06;  // enable write
-  csLOW();
-  SPI_Write(&tData, 1);
-  csHIGH();
-  W25Q_Delay(5);  // 5ms delay
-}
-
-void write_disable(void)
-{
-  uint8_t tData = 0x04;  // disable write
-  csLOW();
-  SPI_Write(&tData, 1);
-  csHIGH();
-  W25Q_Delay(5);  // 5ms delay
-}
-
 uint32_t bytestowrite(uint32_t size, uint16_t offset)
 {
   if((size + offset) < 256)
@@ -227,7 +246,7 @@ void W25Q_Erase_Sector(uint16_t numsector)
   uint8_t tData[6];
   uint32_t memAddr = numsector * 16 * 256;   // Each sector contains 16 pages * 256 bytes
 
-  write_enable();
+  W25Q64_WriteEnable();
 
   if(numBLOCK < 512)   // Chip Size<256Mb
   {
@@ -255,87 +274,53 @@ void W25Q_Erase_Sector(uint16_t numsector)
 
   W25Q_Delay(450);  // 450ms delay for sector erase
 
-  write_disable();
+  W25Q64_WriteDisable();
 
 }
 
-void W25Q_Write_Page(uint32_t page, uint16_t offset, uint32_t size, uint8_t *data)
+void W25Q64_WritePage(uint32_t page, uint16_t offset, uint32_t size, uint8_t *data)
 {
-  uint8_t tData[266];
   uint32_t startPage = page;
   uint32_t endPage = startPage + ((size + offset - 1) / 256);
   uint32_t numPages = endPage - startPage + 1;
 
-  uint16_t startSector = startPage / 16;
-  uint16_t endSector = endPage / 16;
-  uint16_t numSectors = endSector - startSector + 1;
-  for(uint16_t i = 0; i < numSectors; i++)
+  uint32_t dataPos = 0;
+  uint32_t remaining = size;
+  uint16_t currentOffset = offset;
+  uint32_t currentPage = page;
+
+  // Write the data page by page
+  while(remaining > 0)
   {
-    W25Q_Erase_Sector(startSector++);
-  }
+    uint16_t bytesThisPage = (remaining + currentOffset < 256) ? remaining : 256 - currentOffset;
 
-  uint32_t dataPosition = 0;
+    uint32_t memAddr = (currentPage * 256) + currentOffset;
 
-  // write the data
-  for(uint32_t i = 0; i < numPages; i++)
-  {
-    uint32_t memAddr = (startPage * 256) + offset;
-    uint16_t bytesremaining = bytestowrite(size, offset);
-    uint32_t indx = 0;
+    W25Q64_WriteEnable();
 
-    write_enable();
+    // Page program
+    SPI1_CS_LOW();
 
-    if(numBLOCK < 512)   // Chip Size<256Mb
+    SPI1_Transfer(W25Q64_CMD_PAGE_PROGRAM);   // Page Program command, 0x02
+    SPI1_Transfer((memAddr >> 16) & 0xFF);    // Address MSB
+    SPI1_Transfer((memAddr >> 8) & 0xFF);     // Address middle
+    SPI1_Transfer(memAddr & 0xFF);            // Address LSB
+
+    // Send data for this page
+    for(uint16_t i = 0; i < bytesThisPage; i++)
     {
-      tData[0] = 0x02;  // page program
-      tData[1] = (memAddr >> 16) & 0xFF;  // MSB of the memory Address
-      tData[2] = (memAddr >> 8) & 0xFF;
-      tData[3] = (memAddr) & 0xFF; // LSB of the memory Address
-
-      indx = 4;
+      SPI1_Transfer(data[dataPos + i]);
     }
 
-    else // we use 32bit memory address for chips >= 256Mb
-    {
-      tData[0] = 0x12;  // page program with 4-Byte Address
-      tData[1] = (memAddr >> 24) & 0xFF;  // MSB of the memory Address
-      tData[2] = (memAddr >> 16) & 0xFF;
-      tData[3] = (memAddr >> 8) & 0xFF;
-      tData[4] = (memAddr) & 0xFF; // LSB of the memory Address
+    while(SPI1->SR & SPI_SR_BSY);
+    SPI1_CS_HIGH();
 
-      indx = 5;
-    }
+    W25Q64_WriteDisable();
 
-    uint16_t bytestosend = bytesremaining + indx;
-
-    for(uint16_t i = 0; i < bytesremaining; i++)
-    {
-      tData[indx++] = data[i + dataPosition];
-    }
-
-    if(bytestosend > 200)
-    {
-      csLOW();
-      SPI_Write(tData, 100);
-      SPI_Write(tData + 100, bytestosend - 100);
-      csHIGH();
-    }
-
-    else
-    {
-      csLOW();
-      SPI_Write(tData, bytestosend);
-      csHIGH();
-    }
-
-    startPage++;
-    offset = 0;
-    size = size - bytesremaining;
-    dataPosition = dataPosition + bytesremaining;
-
-    W25Q_Delay(5);
-    write_disable();
-
+    // Update for next page
+    dataPos += bytesThisPage;
+    remaining -= bytesThisPage;
+    currentPage++;
+    currentOffset = 0;
   }
 }
-
