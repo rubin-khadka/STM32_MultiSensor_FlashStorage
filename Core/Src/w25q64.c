@@ -137,28 +137,11 @@ uint8_t W25Q64_ReadStatus2(void)
 
 void W25Q64_WriteEnable(void)
 {
-  uint8_t status;
-  uint32_t timeout = 1000;
-
   SPI1_CS_LOW();
   // Send write enable command (0x06)
   SPI1_Transfer(W25Q64_CMD_WRITE_ENABLE);  // 0x06
   SPI1_CS_HIGH();
-
-  USART1_SendString("Checking for status !\r\n");
-  do
-  {
-    status = W25Q64_ReadStatus();
-    timeout--;
-    if(timeout == 0)
-    {
-      // Write enable failed
-      USART1_SendString("Write Enable Timeout!\r\n");
-      break;
-    }
-  }
-  while(!(status & 0x02));  // Wait for WEL bit (bit 1)
-  USART1_SendString("Write Enabled !\r\n");
+  DWT_Delay_ms(5);
 }
 
 void W25Q64_WriteDisable(void)
@@ -237,11 +220,6 @@ uint32_t bytestowrite(uint32_t size, uint16_t offset)
 uint8_t W25Q64_EraseSector(uint32_t sector_num)
 {
   uint32_t memAddr = sector_num * 4096;
-  uint32_t timeout = 0;
-
-  USART1_SendString("Erasing Sector ");
-  USART1_SendNumber(sector_num);
-  USART1_SendString("...\r\n");
 
   // Enable write and verify
   W25Q64_WriteEnable();
@@ -265,23 +243,6 @@ uint8_t W25Q64_EraseSector(uint32_t sector_num)
   while(SPI1->SR & SPI_SR_BSY);
   SPI1_CS_HIGH();
 
-  // **CRITICAL: Wait for erase to complete by polling status register**
-  USART1_SendString("Waiting for erase to complete...\r\n");
-
-  timeout = 100000;  // Timeout counter
-  do
-  {
-    status = W25Q64_ReadStatus();
-    timeout--;
-    if(timeout == 0)
-    {
-      USART1_SendString("Erase Timeout!\r\n");
-      return W25Q64_ERROR;
-    }
-  }
-  while(status & 0x01);  // Check BUSY bit (bit 0)
-
-  USART1_SendString("Erase Complete!\r\n");
   return W25Q64_OK;
 }
 
