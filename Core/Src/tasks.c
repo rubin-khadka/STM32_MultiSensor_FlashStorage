@@ -176,3 +176,20 @@ void Task_LCD_Update(void)
       break;
   }
 }
+
+void Task_Button_Status(void)
+{
+  // Handle button 2
+  if(g_button2_pressed)
+  {
+    Feedback_Show("DATA SAVING...", "TAKES 1 Sec", 1000);
+    g_button2_pressed = 0;
+  }
+
+  // Handle button 3
+  if(g_button3_pressed)
+  {
+    Feedback_Show("DATA READING...", "TAKES 1 Sec", 1000);
+    g_button3_pressed = 0;
+  }
+}

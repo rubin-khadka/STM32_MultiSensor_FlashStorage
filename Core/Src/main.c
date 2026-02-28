@@ -140,19 +140,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    // Handle button 2
-    if(g_button2_pressed)
-    {
-      Feedback_Show("Logger", "DATA SAVED", 1000);
-      g_button2_pressed = 0;
-    }
-
-    // Handle button 3
-    if(g_button3_pressed)
-    {
-      Feedback_Show("Logger", "DATA READ", 1000);
-      g_button3_pressed = 0;
-    }
+    // Check buttons status
+    Task_Button_Status();
 
     // Update feedback timer
     Task_Feedback_Update();

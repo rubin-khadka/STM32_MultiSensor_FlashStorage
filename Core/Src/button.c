@@ -7,6 +7,9 @@
 
 #include "stm32f103xb.h"
 #include "button.h"
+#include "timer2.h"
+
+#define COOLDOWN_PERIOD_MS 1000  // 1 second cooldown
 
 // Current display mode
 static volatile DisplayMode_t current_mode = DISPLAY_MODE_TEMP_HUM;
@@ -18,6 +21,10 @@ static volatile uint8_t button3_pressed = 0;  // PA2 - Read
 
 volatile uint8_t g_button2_pressed = 0;
 volatile uint8_t g_button3_pressed = 0;
+
+// Button cooldown timers
+static volatile uint32_t button2_cooldown_until = 0;
+static volatile uint32_t button3_cooldown_until = 0;
 
 void Button_Init(void)
 {
@@ -69,6 +76,24 @@ void Button_Init(void)
   NVIC_EnableIRQ(EXTI0_IRQn);
   NVIC_EnableIRQ(EXTI1_IRQn);
   NVIC_EnableIRQ(EXTI2_IRQn);
+
+  // Initialize cooldown timers
+  button2_cooldown_until = 0;
+  button3_cooldown_until = 0;
+}
+
+// Check if button is in cooldown
+static uint8_t Button_IsInCooldown(uint32_t cooldown_until)
+{
+  uint32_t current_time = TIMER2_GetMillis();
+
+  if(cooldown_until == 0)
+    return 0;  // Not in cooldown
+
+  if(current_time >= cooldown_until)
+    return 0;  // Cooldown expired
+
+  return 1;  // Still in cooldown
 }
 
 // EXTI0 Interrupt Handler
@@ -92,6 +117,14 @@ void EXTI1_IRQHandler(void)
 {
   if(EXTI->PR & EXTI_PR_PR1)
   {
+    // Check if button is in cooldown
+    if(Button_IsInCooldown(button2_cooldown_until))
+    {
+      // Button is in cooldown - ignore this press
+      EXTI->PR |= EXTI_PR_PR1;  // Clear pending bit
+      return;  // Exit without processing
+    }
+
     EXTI->IMR &= ~EXTI_IMR_MR1;
     EXTI->PR |= EXTI_PR_PR1;
 
@@ -108,6 +141,14 @@ void EXTI2_IRQHandler(void)
 {
   if(EXTI->PR & EXTI_PR_PR2)
   {
+    // Check if button is in cooldown
+    if(Button_IsInCooldown(button3_cooldown_until))
+    {
+      // Button is in cooldown - ignore this press
+      EXTI->PR |= EXTI_PR_PR2;  // Clear pending bit
+      return;  // Exit without processing
+    }
+
     EXTI->IMR &= ~EXTI_IMR_MR2;
     EXTI->PR |= EXTI_PR_PR2;
 
@@ -167,6 +208,10 @@ void TIM4_IRQHandler(void)
     {
       if(!(GPIOA->IDR & GPIO_IDR_IDR1))
       {
+        // Set cooldown for 1 second from now
+        button2_cooldown_until = TIMER2_GetMillis() + COOLDOWN_PERIOD_MS;
+
+        // Trigger the button action
         g_button2_pressed = 1;
         button2_pressed = 0;
       }
@@ -178,6 +223,10 @@ void TIM4_IRQHandler(void)
     {
       if(!(GPIOA->IDR & GPIO_IDR_IDR2))
       {
+        // Set cooldown for 1 second from now
+        button3_cooldown_until = TIMER2_GetMillis() + COOLDOWN_PERIOD_MS;
+
+        // Trigger the button action
         g_button3_pressed = 1;
         button3_pressed = 0;
       }
