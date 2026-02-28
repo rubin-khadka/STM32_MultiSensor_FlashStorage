@@ -124,7 +124,7 @@ void USART1_SendChar(char c)
 }
 
 // Send a string
-void USART1_SendString(char *str)
+void USART1_SendString(const char *str)
 {
   while(*str)
   {

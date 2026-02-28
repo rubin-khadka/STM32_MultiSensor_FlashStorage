@@ -126,125 +126,6 @@ int main(void)
   W25Q64_Reset();
   W25Q64_Init();
 
-  uint8_t read_buffer1[32];
-  uint8_t read_buffer2[32];
-
-  // Test Write and Read
-  uint8_t write_buffer[64];
-  uint8_t read_buffer[64];
-
-  // Prepare test data (0x00, 0x01, 0x02, ...)
-  for(int i = 0; i < 64; i++)
-  {
-    write_buffer[i] = i;
-  }
-
-  // Write 64 bytes starting at page 0, offset 0
-  W25Q64_WritePage(0, 0, 64, write_buffer);
-
-  // Read back the data
-  W25Q64_Read(0, 0, 64, read_buffer);
-
-  // Verify data
-  uint8_t match = 1;
-  for(int i = 0; i < 64; i++)
-  {
-    if(read_buffer[i] != write_buffer[i])
-    {
-      match = 0;
-      break;
-    }
-  }
-
-  // Send results via UART
-  USART1_SendString("\r\nW25Q64 Write/Read Test:\r\n");
-  USART1_SendString("Written: ");
-  for(int i = 0; i < 16; i++)
-  {
-    USART1_SendHex(write_buffer[i]);
-    USART1_SendString(" ");
-  }
-  USART1_SendString("\r\nRead: ");
-  for(int i = 0; i < 16; i++)
-  {
-    USART1_SendHex(read_buffer[i]);
-    USART1_SendString(" ");
-  }
-  USART1_SendString("\r\n");
-
-  if(match)
-  {
-    USART1_SendString("TEST PASSED!\r\n");
-  }
-  else
-  {
-    USART1_SendString("TEST FAILED!\r\n");
-  }
-
-  if(W25Q64_EraseSector(0) == W25Q64_OK)
-  {
-    USART1_SendString("Erase successful\r\n");
-  }
-  else
-  {
-    USART1_SendString("Erase FAILED!\r\n");
-  }
-
-  DWT_Delay_ms(500);
-
-  USART1_SendString("Step 3: Reading sector after erase\r\n");
-  W25Q64_FastRead(0 * 16, 0, 32, read_buffer2);
-
-  // Display first 16 bytes after erase
-  USART1_SendString("After erase:  ");
-  for(int i = 0; i < 16; i++)
-  {
-    USART1_SendHex(read_buffer2[i]);
-    USART1_SendString(" ");
-  }
-  USART1_SendString("\r\n");
-
-  // Write 64 bytes starting at page 0, offset 0
-  W25Q64_WritePage(0, 0, 64, write_buffer);
-
-  // Read back the data
-  W25Q64_Read(0, 0, 64, read_buffer);
-
-  // Verify data
-  for(int i = 0; i < 64; i++)
-  {
-    if(read_buffer[i] == write_buffer[i])
-    {
-      match = 1;
-      break;
-    }
-  }
-
-  // Send results via UART
-  USART1_SendString("\r\nW25Q64 Write/Read Test:\r\n");
-  USART1_SendString("Written: ");
-  for(int i = 0; i < 16; i++)
-  {
-    USART1_SendHex(write_buffer[i]);
-    USART1_SendString(" ");
-  }
-  USART1_SendString("\r\nRead: ");
-  for(int i = 0; i < 16; i++)
-  {
-    USART1_SendHex(read_buffer[i]);
-    USART1_SendString(" ");
-  }
-  USART1_SendString("\r\n");
-
-  if(match)
-  {
-    USART1_SendString("TEST PASSED!\r\n");
-  }
-  else
-  {
-    USART1_SendString("TEST FAILED!\r\n");
-  }
-
   DWT_Delay_ms(2000);
 
   // Setup TIM3 for 10ms control loop
@@ -258,6 +139,24 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    // Handle button 2
+    if(g_button2_pressed)
+    {
+      Feedback_Show("Logger", "DATA SAVED", 1000);
+      g_button2_pressed = 0;
+    }
+
+    // Handle button 3
+    if(g_button3_pressed)
+    {
+      Feedback_Show("Logger", "DATA READ", 1000);
+      g_button3_pressed = 0;
+    }
+
+    // Update feedback timer
+    Task_Feedback_Update();
+
     // Run tasks at different rates
     // Read DS18B20 every 1 seconds
     if(ds18b20_count++ >= DS18B20_READ_TICKS)

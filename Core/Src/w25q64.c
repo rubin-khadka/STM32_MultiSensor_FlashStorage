@@ -5,37 +5,22 @@
 #include "lcd.h"
 #include "uart.h"
 
-extern SPI_HandleTypeDef hspi1;
-#define W25Q_SPI hspi1
+// W25Q64 Commands
+#define W25Q64_CMD_RESET            0x99
+#define W25Q64_CMD_RESET_ENABLE     0x66
+#define W25Q64_CMD_READ_ID          0x9F
+#define W25Q64_CMD_READ_STATUS      0x05
+#define W25Q64_CMD_WRITE_ENABLE     0x06
+#define W25Q64_CMD_WRITE_DISABLE    0x04
+#define W25Q64_CMD_READ_DATA        0x03
+#define W25Q64_CMD_FAST_READ        0x0B
+#define W25Q64_CMD_PAGE_PROGRAM     0x02
+#define W25Q64_CMD_SECTOR_ERASE     0x20
 
-#define numBLOCK 128
-
-void W25Q_Delay(uint32_t time)
-{
-  HAL_Delay(time);
-}
-
-void csLOW(void)
-{
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
-}
-
-void csHIGH(void)
-{
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
-}
-
-void SPI_Write(uint8_t *data, uint8_t len)
-{
-  HAL_SPI_Transmit(&W25Q_SPI, data, len, 2000);
-}
-
-void SPI_Read(uint8_t *data, uint32_t len)
-{
-  HAL_SPI_Receive(&W25Q_SPI, data, len, 5000);
-}
-
-/**************************************************************************************************/
+#define W25Q64_CMD_WRITE_STATUS     0x01
+#define W25Q64_CMD_BLOCK_ERASE_32K  0x52
+#define W25Q64_CMD_BLOCK_ERASE_64K  0xD8
+#define W25Q64_CMD_CHIP_ERASE       0xC7
 
 void W25Q64_Reset(void)
 {
@@ -43,7 +28,6 @@ void W25Q64_Reset(void)
 
   SPI1_Transfer(W25Q64_CMD_RESET_ENABLE);   // Enable Reset
   SPI1_Transfer(W25Q64_CMD_RESET);          // Reset command
-
   while(SPI1->SR & SPI_SR_BSY);
   SPI1_CS_HIGH();
 
@@ -149,7 +133,6 @@ void W25Q64_WriteEnable(void)
   SPI1_CS_HIGH();
 
   USART1_SendString("Checking for status !\r\n");
-  // Verify write enable succeeded (WEL bit should be set)
   do
   {
     status = W25Q64_ReadStatus();

@@ -17,6 +17,86 @@
 
 static char uart_buf[32];
 
+static char uart_buf[32];
+
+// Structure for feedback display
+typedef struct
+{
+  char line1[16];
+  char line2[16];
+  uint32_t end_time;      // System time when feedback should end
+  uint8_t active;         // Feedback currently active
+} Feedback_t;
+
+static Feedback_t feedback = {0};
+
+// Show a message on LCD for specified duration
+void Feedback_Show(const char *line1, const char *line2, uint16_t duration_ms)
+{
+  // Copy line1
+  int i = 0;
+  while(line1[i] && i < 15)
+  {
+    feedback.line1[i] = line1[i];
+    i++;
+  }
+  feedback.line1[i] = '\0';
+
+  // Copy line2
+  i = 0;
+  while(line2[i] && i < 15)
+  {
+    feedback.line2[i] = line2[i];
+    i++;
+  }
+  feedback.line2[i] = '\0';
+
+  // Calculate end time
+  feedback.end_time = TIMER2_GetMillis() + duration_ms;
+  feedback.active = 1;
+
+  // Show immediately on LCD
+  LCD_Clear();
+  LCD_SetCursor(0, 0);
+  LCD_SendString(feedback.line1);
+  LCD_SetCursor(1, 0);
+  LCD_SendString(feedback.line2);
+
+  // Optional: Also send to UART for debugging
+  USART1_SendString("Feedback: ");
+  USART1_SendString(line1);
+  USART1_SendString(" - ");
+  USART1_SendString(line2);
+  USART1_SendString("\r\n");
+}
+
+// Check if feedback time has expired
+void Task_Feedback_Update(void)
+{
+  if(!feedback.active)
+    return;
+
+  uint32_t now = TIMER2_GetMillis();
+
+  // Check if we've reached/passed the end time
+  if(now >= feedback.end_time)
+  {
+    feedback.active = 0;
+  }
+}
+
+// Force clear feedback immediately
+void Feedback_Clear(void)
+{
+  feedback.active = 0;
+}
+
+// Check if feedback is currently active
+uint8_t Feedback_IsActive(void)
+{
+  return feedback.active;
+}
+
 // Task to update UART output
 void Task_UART_Output(void)
 {
@@ -75,6 +155,7 @@ void Task_MPU6050_Read(void)
 // Task to update LCD display
 void Task_LCD_Update(void)
 {
+  if(feedback.active) return;
   DisplayMode_t mode = Button_GetMode();
 
   switch(mode)

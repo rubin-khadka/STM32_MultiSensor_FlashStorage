@@ -37,7 +37,7 @@ uint8_t USART1_BufferRead(volatile USART1_Buffer_t *buff);
 
 // High-level functions (these will use the buffer functions)
 void USART1_SendChar(char c);
-void USART1_SendString(char *str);
+void USART1_SendString(const char *str);
 uint8_t USART1_GetChar(void);  // Get a character from RX buffer
 bool USART1_DataAvailable(void);  // Check if RX data is available
 
