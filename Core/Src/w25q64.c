@@ -196,86 +196,81 @@ void W25Q64_Read(uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rDa
   DWT_Delay_us(5);                  // Small delay after CS high
 }
 
-void W25Q_FastRead(uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData)
+void W25Q64_FastRead(uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData)
 {
-  uint8_t tData[6];
   uint32_t memAddr = (startPage * 256) + offset;
 
-  if(numBLOCK < 512)   // Chip Size<256Mb
+  SPI1_CS_LOW();
+
+  // Send fast read command (0x0B)
+  SPI1_Transfer(W25Q64_CMD_FAST_READ);
+
+  // Send 24-bit address (MSB first)
+  SPI1_Transfer((memAddr >> 16) & 0xFF);    // Address bits 23-16
+  SPI1_Transfer((memAddr >> 8) & 0xFF);     // Address bits 15-8
+  SPI1_Transfer(memAddr & 0xFF);            // Address bits 7-0
+
+  // Dummy byte (required for fast read at higher speeds)
+  SPI1_Transfer(0x00);
+
+  // Small delay before reading data
+  DWT_Delay_us(1);
+
+  // Read data bytes
+  for(uint32_t i = 0; i < size; i++)
   {
-    tData[0] = 0x0B;  // enable Fast Read
-    tData[1] = (memAddr >> 16) & 0xFF;  // MSB of the memory Address
-    tData[2] = (memAddr >> 8) & 0xFF;
-    tData[3] = (memAddr) & 0xFF; // LSB of the memory Address
-    tData[4] = 0;  // Dummy clock
-  }
-  else  // we use 32bit memory address for chips >= 256Mb
-  {
-    tData[0] = 0x0C;  // Fast Read with 4-Byte Address
-    tData[1] = (memAddr >> 24) & 0xFF;  // MSB of the memory Address
-    tData[2] = (memAddr >> 16) & 0xFF;
-    tData[3] = (memAddr >> 8) & 0xFF;
-    tData[4] = (memAddr) & 0xFF; // LSB of the memory Address
-    tData[5] = 0;  // Dummy clock
+    rData[i] = SPI1_Transfer(0xFF);       // Send dummy, read data
   }
 
-  csLOW();  // pull the CS Low
-  if(numBLOCK < 512)
-  {
-    SPI_Write(tData, 5);  // send read instruction along with the 24 bit memory address
-  }
-  else
-  {
-    SPI_Write(tData, 6);  // send read instruction along with the 32 bit memory address
-  }
-
-  SPI_Read(rData, size);  // Read the data
-  csHIGH();  // pull the CS High
+  SPI1_CS_HIGH();
+  DWT_Delay_us(5);
 }
 
 uint32_t bytestowrite(uint32_t size, uint16_t offset)
 {
   if((size + offset) < 256)
-    return size;
+  {
+    return size;           // Can write all in one page
+  }
   else
-    return 256 - offset;
+  {
+    return 256 - offset;    // Fill up to page boundary
+  }
 }
 
-void W25Q_Erase_Sector(uint16_t numsector)
+uint8_t W25Q64_EraseSector(uint32_t sector_num)
 {
-  uint8_t tData[6];
-  uint32_t memAddr = numsector * 16 * 256;   // Each sector contains 16 pages * 256 bytes
+  uint32_t memAddr = sector_num * 4096;  // Each sector = 16 pages * 256 bytes = 4096 bytes
 
+  USART1_SendString("Erasing Sector ");
+  USART1_SendNumber(sector_num);
+  USART1_SendString("...\r\n");
+
+  // Enable write and verify
   W25Q64_WriteEnable();
 
-  if(numBLOCK < 512)   // Chip Size<256Mb
+  // Check if write enable succeeded
+  uint8_t status = W25Q64_ReadStatus();
+  if(!(status & 0x02))
   {
-    tData[0] = 0x20;  // Erase sector
-    tData[1] = (memAddr >> 16) & 0xFF;  // MSB of the memory Address
-    tData[2] = (memAddr >> 8) & 0xFF;
-    tData[3] = (memAddr) & 0xFF; // LSB of the memory Address
-
-    csLOW();
-    SPI_Write(tData, 4);
-    csHIGH();
-  }
-  else  // we use 32bit memory address for chips >= 256Mb
-  {
-    tData[0] = 0x21;  // ERASE Sector with 32bit address
-    tData[1] = (memAddr >> 24) & 0xFF;
-    tData[2] = (memAddr >> 16) & 0xFF;
-    tData[3] = (memAddr >> 8) & 0xFF;
-    tData[4] = memAddr & 0xFF;
-
-    csLOW();  // pull the CS LOW
-    SPI_Write(tData, 5);
-    csHIGH();  // pull the HIGH
+    USART1_SendString("ERROR: Write Enable Failed for Erase!\r\n");
+    return W25Q64_ERROR;
   }
 
-  W25Q_Delay(450);  // 450ms delay for sector erase
+  // Send sector erase command (0x20 for 24-bit addressing)
+  SPI1_CS_LOW();
 
-  W25Q64_WriteDisable();
+  SPI1_Transfer(W25Q64_CMD_SECTOR_ERASE);                    // Sector Erase command
+  SPI1_Transfer((memAddr >> 16) & 0xFF);   // Address bits 23-16
+  SPI1_Transfer((memAddr >> 8) & 0xFF);    // Address bits 15-8
+  SPI1_Transfer(memAddr & 0xFF);            // Address bits 7-0
 
+  // Wait for SPI to finish
+  while(SPI1->SR & SPI_SR_BSY);
+
+  SPI1_CS_HIGH();
+
+  return W25Q64_OK;
 }
 
 void W25Q64_WritePage(uint32_t page, uint16_t offset, uint32_t size, uint8_t *data)

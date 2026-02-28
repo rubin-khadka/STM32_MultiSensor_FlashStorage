@@ -126,76 +126,124 @@ int main(void)
   W25Q64_Reset();
   W25Q64_Init();
 
+  uint8_t read_buffer1[32];
+  uint8_t read_buffer2[32];
+
   // Test Write and Read
   uint8_t write_buffer[64];
   uint8_t read_buffer[64];
 
   // Prepare test data (0x00, 0x01, 0x02, ...)
-  for(int i = 0; i < 64; i++) {
-      write_buffer[i] = i;
+  for(int i = 0; i < 64; i++)
+  {
+    write_buffer[i] = i;
   }
-
-  LCD_Clear();
-  LCD_SendString("Writing to Flash...");
-  HAL_Delay(1000);
 
   // Write 64 bytes starting at page 0, offset 0
   W25Q64_WritePage(0, 0, 64, write_buffer);
-
-  LCD_Clear();
-  LCD_SendString("Reading from Flash");
-  HAL_Delay(1000);
 
   // Read back the data
   W25Q64_Read(0, 0, 64, read_buffer);
 
   // Verify data
   uint8_t match = 1;
-  for(int i = 0; i < 64; i++) {
-      if(read_buffer[i] != write_buffer[i]) {
-          match = 0;
-          break;
-      }
+  for(int i = 0; i < 64; i++)
+  {
+    if(read_buffer[i] != write_buffer[i])
+    {
+      match = 0;
+      break;
+    }
   }
-
-  LCD_Clear();
-  if(match) {
-      LCD_SendString("Write/Read OK!");
-  } else {
-      LCD_SendString("Data Mismatch!");
-  }
-
-  LCD_SetCursor(1, 0);
-
-  // Display first 8 bytes on LCD
-  char lcd_display[17];
-  for(int i = 0; i < 8; i++) {
-      lcd_display[i*2] = "0123456789ABCDEF"[read_buffer[i] >> 4];
-      lcd_display[i*2 + 1] = "0123456789ABCDEF"[read_buffer[i] & 0x0F];
-  }
-  lcd_display[16] = 0;
-  LCD_SendString(lcd_display);
 
   // Send results via UART
   USART1_SendString("\r\nW25Q64 Write/Read Test:\r\n");
   USART1_SendString("Written: ");
-  for(int i = 0; i < 16; i++) {
-      USART1_SendHex(write_buffer[i]);
-      USART1_SendString(" ");
+  for(int i = 0; i < 16; i++)
+  {
+    USART1_SendHex(write_buffer[i]);
+    USART1_SendString(" ");
   }
   USART1_SendString("\r\nRead: ");
-  for(int i = 0; i < 16; i++) {
-      USART1_SendHex(read_buffer[i]);
-      USART1_SendString(" ");
+  for(int i = 0; i < 16; i++)
+  {
+    USART1_SendHex(read_buffer[i]);
+    USART1_SendString(" ");
   }
   USART1_SendString("\r\n");
 
-  if(match) {
-      USART1_SendString("TEST PASSED!\r\n");
-  } else {
-      USART1_SendString("TEST FAILED!\r\n");
+  if(match)
+  {
+    USART1_SendString("TEST PASSED!\r\n");
+  }
+  else
+  {
+    USART1_SendString("TEST FAILED!\r\n");
   }
 
+  if(W25Q64_EraseSector(0) == W25Q64_OK)
+  {
+    USART1_SendString("Erase successful\r\n");
+  }
+  else
+  {
+    USART1_SendString("Erase FAILED!\r\n");
+  }
+
+  DWT_Delay_ms(500);
+
+  USART1_SendString("Step 3: Reading sector after erase\r\n");
+  W25Q64_FastRead(0 * 16, 0, 32, read_buffer2);
+
+  // Display first 16 bytes after erase
+  USART1_SendString("After erase:  ");
+  for(int i = 0; i < 16; i++)
+  {
+    USART1_SendHex(read_buffer2[i]);
+    USART1_SendString(" ");
+  }
+  USART1_SendString("\r\n");
+
+  // Write 64 bytes starting at page 0, offset 0
+  W25Q64_WritePage(0, 0, 64, write_buffer);
+
+  // Read back the data
+  W25Q64_Read(0, 0, 64, read_buffer);
+
+  // Verify data
+  for(int i = 0; i < 64; i++)
+  {
+    if(read_buffer[i] == write_buffer[i])
+    {
+      match = 1;
+      break;
+    }
+  }
+
+  // Send results via UART
+  USART1_SendString("\r\nW25Q64 Write/Read Test:\r\n");
+  USART1_SendString("Written: ");
+  for(int i = 0; i < 16; i++)
+  {
+    USART1_SendHex(write_buffer[i]);
+    USART1_SendString(" ");
+  }
+  USART1_SendString("\r\nRead: ");
+  for(int i = 0; i < 16; i++)
+  {
+    USART1_SendHex(read_buffer[i]);
+    USART1_SendString(" ");
+  }
+  USART1_SendString("\r\n");
+
+  if(match)
+  {
+    USART1_SendString("TEST PASSED!\r\n");
+  }
+  else
+  {
+    USART1_SendString("TEST FAILED!\r\n");
+  }
 
   DWT_Delay_ms(2000);
 
