@@ -52,7 +52,6 @@ SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
 
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,7 +64,47 @@ static void MX_SPI1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void Task_Button_Status(void)
+{
+  // Button 2 - SAVE data
+  if(g_button2_pressed)
+  {
+    Feedback_Show("SAVING...", "DATA", 1000);
 
+    uint8_t result = DataLogger_SaveEntry();
+
+    if(result == LOGGER_OK)
+    {
+      LCD_Clear();
+      LCD_SetCursor(0, 0);
+      LCD_SendString("SAVED!");
+      LCD_SetCursor(1, 0);
+      char msg[16];
+      sprintf(msg, "ENTRY #%lu", DataLogger_GetEntryCount());
+      LCD_SendString(msg);
+    }
+
+    g_button2_pressed = 0;
+  }
+
+  // Button 3 - READ data
+  if(g_button3_pressed)
+  {
+    Feedback_Show("READING...", "CHECK UART", 1000);
+
+    uint32_t count = DataLogger_ReadAll();
+
+    LCD_Clear();
+    LCD_SetCursor(0, 0);
+    LCD_SendString("READ DONE");
+    LCD_SetCursor(1, 0);
+    char msg[16];
+    sprintf(msg, "%lu ENTRIES", count);
+    LCD_SendString(msg);
+
+    g_button3_pressed = 0;
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -127,6 +166,8 @@ int main(void)
   // Add this after W25Q64_Init() in your main function
   W25Q64_Reset();
   W25Q64_Init();
+  W25Q64_EraseSector(1);
+  DWT_Delay_ms(500);
   DataLogger_Init();
 
   DWT_Delay_ms(2000);
@@ -144,7 +185,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
     // Check buttons status
-    // Task_Button_Status();
+    Task_Button_Status();
 
     // Update feedback timer
     Task_Feedback_Update();

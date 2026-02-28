@@ -8,9 +8,9 @@
 #ifndef W25Q64_H_
 #define W25Q64_H_
 
-#define W25Q64_OK                      0
-#define W25Q64_ERROR                   1
-#define W25Q64_BUSY                    2
+#define W25Q64_OK             0
+#define W25Q64_ERROR          1
+#define W25Q64_BUSY           2
 
 // Function Prototypes
 void W25Q64_Reset(void);

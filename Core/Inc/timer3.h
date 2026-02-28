@@ -13,8 +13,6 @@
 
 // Setup TIM3 with fixed 0.1ms precision
 void TIMER3_SetupPeriod(uint16_t ms);
-
-// Wait for period to expire
-uint8_t TIMER3_WaitPeriod(void);
+uint8_t TIMER3_WaitPeriod(void); // Wait for period to expire
 
 #endif /* TIMER3_H_ */
