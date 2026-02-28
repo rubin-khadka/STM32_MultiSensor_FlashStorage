@@ -171,6 +171,15 @@ void USART1_SendNumber(uint32_t num)
   }
 }
 
+void USART1_SendHex(uint8_t value)
+{
+  char hex[3];
+  hex[0] = "0123456789ABCDEF"[value >> 4];
+  hex[1] = "0123456789ABCDEF"[value & 0x0F];
+  hex[2] = 0;
+  USART1_SendString(hex);
+}
+
 void USART1_IRQHandler(void)
 {
   // Handle received data - WRITE to RX buffer

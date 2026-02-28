@@ -8,8 +8,13 @@
 #ifndef W25Q64_H_
 #define W25Q64_H_
 
-void W25Q_Reset (void);
-uint32_t W25Q_ReadID (void);
+// W25Q64 Commands
+#define W25Q64_CMD_RESET            0x99
+#define W25Q64_CMD_RESET_ENABLE     0x66
+#define W25Q64_CMD_READ_ID          0x9F
 
+// Function Prototypes
+void W25Q64_Reset(void);
+void W25Q64_Init(void);
 
 #endif /* W25Q64_H_ */
