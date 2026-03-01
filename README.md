@@ -13,7 +13,7 @@
 - [Drivers](#mpu-6050-imu-driver)
 - [Data Logger](#data-logger-implementation)
 - [Getting Started](#getting-started)
-- [Resources](#resources)
+- [Resources](#related-projects)
 
 ## Project Overview
 
@@ -80,6 +80,8 @@ The system uses a **10ms timer-based control loop** with independent counters fo
 🔗 [View TIMER2 Driver (Millisecond Counter)](https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage/blob/main/Core/Src/timer2.c)  
 🔗 [View TIMER3 Driver (10ms Heartbeat)](https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage/blob/main/Core/Src/timer3.c)  
 🔗 [View Button & TIMER4 Driver (Debounce)](https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage/blob/main/Core/Src/button.c)
+
+> **Note:** DWT (Data Watchpoint and Trace) is a built-in peripheral in ARM Cortex-M3 cores that provides a cycle counter running at CPU frequency (72MHz). This gives ~13.9ns resolution, making it ideal for generating precise microsecond delays required by the DS18B20 1-Wire protocol. Unlike traditional timer-based delays, DWT does not occupy a dedicated timer peripheral and continues running in the background.
 
 ## Hardware Components
 
@@ -334,21 +336,12 @@ The data logger module manages storage of sensor readings in the W25Q64 flash me
 ```bash
 git clone https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage.git
 ```
-2. Open in STM32CubeIDE
-    - `File` → `Import...`
-    - `General` → `Existing Projects into Workspace` → `Next`
-    - Select the project directory
-    - Click `Finish`    
+2. Open this project in STM32CubeIDE:
+   - `File` → `Open Projects from File System...`
+   - Select the cloned directory
+   - Click `Finish`
 
-3. Verify Project Settings
-    - `Project` → `Properties` → `C/C++ Build` → `Settings`
-    - `MCU GCC Compiler` → `Preprocessor`
-    - Ensure `STM32F103xB` is defined
-    - `MCU GCC Compiler` → `Include paths` Add the following paths
-        - "~\STM32Cube_FW_F1_V1.8.0\Drivers\CMSIS\Core\Include"
-        - "~\STM32Cube_FW_F1_V1.8.0\Drivers\CMSIS\Device\ST\STM32F1xx\Include"
-
-4. Build & Flash
+3. Build & Flash
     - Build: `Ctrl+B`
     - Debug: `F11`
     - Run: `F8` (Resume)
