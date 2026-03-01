@@ -16,15 +16,13 @@
 #define FLASH_PAGE_SIZE     256
 #define ENTRY_SIZE          32
 #define ENTRIES_PER_PAGE    8
-#define START_PAGE          1
-#define MAX_PAGES           100
+
+#define SECTORS_FOR_DATA    100      // Use 2047 sectors
+#define ENTRIES_PER_SECTOR  128       // 128 entries per sector
+#define MAX_ENTRIES         (SECTORS_FOR_DATA * ENTRIES_PER_SECTOR)
 
 static uint32_t entry_count = 0;
 static uint8_t initialized = 0;
-
-#define SECTORS_FOR_DATA    8        // Use 8 sectors
-#define ENTRIES_PER_SECTOR  128      // 128 entries per sector
-#define MAX_ENTRIES         (SECTORS_FOR_DATA * ENTRIES_PER_SECTOR)
 
 // Erase state machine
 typedef enum
@@ -76,8 +74,10 @@ void DataLogger_Init(void)
   logger.total_saved = 0;
   logger.erase_state = ERASE_IDLE;
 
+  USART1_SendString("Scanning for existing data...\r\n");
+
   // Scan all sectors in circular order
-  for(uint32_t sector = 1; sector < 1 + SECTORS_FOR_DATA; sector++)
+  for(uint32_t sector = 0; sector < 1 + SECTORS_FOR_DATA; sector++)
   {
     for(uint32_t entry_in_sector = 0; entry_in_sector < ENTRIES_PER_SECTOR; entry_in_sector++)
     {

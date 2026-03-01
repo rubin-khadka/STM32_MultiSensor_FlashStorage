@@ -126,6 +126,8 @@ int main(void)
 
   W25Q64_Reset();
   W25Q64_Init();
+//  W25Q64_EraseSector(1);
+//  DWT_Delay_ms(500);
   DataLogger_Init();
   DWT_Delay_ms(2000);
   Button_Init();
