@@ -106,7 +106,6 @@ int main(void)
   I2C2_Init();
   LCD_Init();
   MPU6050_Init();
-  Button_Init();
   TIMER4_Init();
   DWT_Init();
   DS18B20_Init();
@@ -127,11 +126,9 @@ int main(void)
 
   W25Q64_Reset();
   W25Q64_Init();
-  W25Q64_EraseSector(0);
-  DWT_Delay_ms(500);
   DataLogger_Init();
-
   DWT_Delay_ms(2000);
+  Button_Init();
 
   // Setup TIM3 for 10ms control loop
   TIMER3_SetupPeriod(10);  // 10ms period
@@ -151,6 +148,9 @@ int main(void)
 
     // Update feedback timer
     Task_Feedback_Update();
+
+    // Run data logger task
+    Task_DataLogger();
 
     // Run tasks at different rates
     // Read DS18B20 every 1 seconds

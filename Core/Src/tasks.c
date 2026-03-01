@@ -184,9 +184,9 @@ void Task_Button_Status(void)
 
       Feedback_Show("SAVED !!!", line2, 1000);
     }
-    else if(result == LOGGER_FULL)
+    else if(result == LOGGER_BUSY)
     {
-      Feedback_Show("LOG FULL!", "ERASE NEEDED", 1000);
+      Feedback_Show("ERASING...", "PLEASE RETRY", 1000);
     }
     else
     {

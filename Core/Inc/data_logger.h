@@ -28,11 +28,13 @@ typedef struct
 #define LOGGER_ERROR        1
 #define LOGGER_FULL         2
 #define LOGGER_UNINIT       3
+#define LOGGER_BUSY         4
 
 // Public functions
 void DataLogger_Init(void);
 uint8_t DataLogger_SaveEntry(void);
 uint32_t DataLogger_ReadAll(void);
 uint32_t DataLogger_GetEntryCount(void);
+void Task_DataLogger(void);
 
 #endif /* INC_DATA_LOGGER_H_ */
