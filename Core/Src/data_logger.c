@@ -17,7 +17,7 @@
 #define ENTRY_SIZE          32
 #define ENTRIES_PER_PAGE    8
 
-#define SECTORS_FOR_DATA    100      // Use 2047 sectors
+#define SECTORS_FOR_DATA    8      // Use 2047 sectors
 #define ENTRIES_PER_SECTOR  128       // 128 entries per sector
 #define MAX_ENTRIES         (SECTORS_FOR_DATA * ENTRIES_PER_SECTOR)
 

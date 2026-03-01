@@ -126,10 +126,10 @@ int main(void)
 
   W25Q64_Reset();
   W25Q64_Init();
-//  W25Q64_EraseSector(1);
-//  DWT_Delay_ms(500);
+
   DataLogger_Init();
-  DWT_Delay_ms(2000);
+  DWT_Delay_ms(1000);
+
   Button_Init();
 
   // Setup TIM3 for 10ms control loop
