@@ -1,4 +1,4 @@
-# STM32 MultiSensor W25Q64 FlashStorage Project
+# STM32 Multi Sensor W25Q64 Flash Storage Project
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![STM32](https://img.shields.io/badge/STM32-F103C8T6-blue)
@@ -8,7 +8,7 @@
 
 ## Project Overview
 
-The **STM32 MultiSensor Flash Storage Logger** is a comprehensive embedded systems project built around the STM32F103C8T6 (Bluepill) microcontroller. It demonstrates real-time sensor data acquisition, visualization on an LCD and UART, and reliable non-volatile storage using external SPI flash memory.
+The **STM32 Multi Sensor Flash Storage Project** is a comprehensive embedded systems project built around the STM32F103C8T6 (Bluepill) microcontroller. It demonstrates real-time sensor data acquisition, visualization on an LCD and UART, and reliable non-volatile storage using external SPI flash memory.
 
 The system reads data from multiple sensors:
 - **DS18B20**: Digital temperature sensor (1-Wire)
@@ -40,7 +40,37 @@ At the heart of the system is the **W25Q64 64Mbit (8MB) SPI Flash memory**, feat
 - **Massive Capacity**: Stores up to **262,016 individual sensor readings** (each containing DS18B20 temperature, MPU6050 temperature, accelerometer, and gyroscope data)
 - **Non-blocking Operations**: Sector erases happen in the background without freezing the system
 
-### Hardware Components
+## Task Scheduling
+
+The system uses a **10ms timer-based control loop** with independent counters for each task. TIMER3 is configured to drive the main control loop, ensuring precise and non-blocking task execution.
+
+### Task Frequencies
+
+| Task | Frequency | Period | Execution |
+|------|-----------|--------|-----------|
+| **DS18B20 Read** | 1 Hz | 1 second | Every 100 loops |
+| **MPU6050 Read** | 20 Hz | 50 ms | Every 5 loops |
+| **LCD Update** | 10 Hz | 100 ms | Every 10 loops |
+| **UART Output** | 10 Hz | 100 ms | Every 10 loops |
+| **Data Logger Task** | 100 Hz | 10 ms | Every loop |
+| **Button Status Check** | 100 Hz | 10 ms | Every loop |
+| **Button Interrupts** | Event-driven | On press | EXTI + TIM4 debounce |
+
+### Timer Configuration
+
+| Timer | Resolution | Purpose |
+|-------|------------|---------|
+| **DWT** | 1µs | DS18B20 1-Wire protocol precise timing |
+| **TIMER2** | 1ms | System millisecond counter and delays |
+| **TIMER3** | 0.1ms | **10ms control loop scheduler** (heartbeat) |
+| **TIMER4** | 0.1ms | Button debouncing (50ms) |
+
+🔗 [View DWT Driver (Microsecond Delay)](https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage/blob/main/Core/Src/dwt.c)  
+🔗 [View TIMER2 Driver (Millisecond Counter)](https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage/blob/main/Core/Src/timer2.c)  
+🔗 [View TIMER3 Driver (10ms Heartbeat)](https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage/blob/main/Core/Src/timer3.c)  
+🔗 [View Button & TIMER4 Driver (Debounce)](https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage/blob/main/Core/Src/button.c)
+
+## Hardware Components
 
 | Component | Quantity | Description |
 |-----------|----------|-------------|
@@ -52,7 +82,8 @@ At the heart of the system is the **W25Q64 64Mbit (8MB) SPI Flash memory**, feat
 | **Push Buttons** | 3 | Two-leg tactile switches for user input |
 | **USB-to-Serial Converter** | 1 | CP2102 / CH340 / FTDI for UART communication and debugging |
 
-## Pin Configuration
+### Pin Configuration
+---
 
 | Peripheral | Pin | Connection | Notes |
 |------------|-----|------------|-------|
@@ -67,10 +98,10 @@ At the heart of the system is the **W25Q64 64Mbit (8MB) SPI Flash memory**, feat
 | | PB11 | SDA | I2C2 data (shared with MPU6050) |
 | | 5V | VCC | Power |
 | | GND | GND | Common ground |
-| **W25Q64 Flash** | PA4 | CS | SPI1 chip select |
-| | PA5 | CLK | SPI1 clock |
-| | PA6 | MISO | SPI1 master in slave out |
-| | PA7 | MOSI | SPI1 master out slave in |
+| **W25Q64 Flash** | PB6 | CS | SPI1 chip select |
+| | PB3 | CLK | SPI1 clock |
+| | PB4 | MISO | SPI1 master in slave out |
+| | PB5 | MOSI | SPI1 master out slave in |
 | | 3.3V | VCC | Power (module may have 3.3V regulator) |
 | | GND | GND | Common ground |
 | **UART** | PA9 | TX to USB-Serial RX | 115200 baud, 8-N-1 |
@@ -87,9 +118,10 @@ The LCD display and MPU6050 share the same I2C bus (PB10/SCL, PB11/SDA) with dif
 | **LCD Module** | 0x27 | 0x4E | 0x4F |
 
 🔗 [View Custom Written I2C Driver Source Code](https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage/blob/main/Core/Src/i2c2.c) <br>
-**Note**: All peripherals are used as pre-built modules. The LCD module uses a PCF8574 I2C backpack. 
+> **Note**: All peripherals are used as pre-built modules. The LCD module uses a PCF8574 I2C backpack. 
 
 ### Project Schematic 
+---
 
 <img width="1687" height="727" alt="Schematic_diagram" src="https://github.com/user-attachments/assets/b9e8124a-65e0-4f60-aa5b-d9ffb071a171" />
 
@@ -97,7 +129,10 @@ The LCD display and MPU6050 share the same I2C bus (PB10/SCL, PB11/SDA) with dif
 
 ## MPU-6050 IMU Driver
 
-The MPU6050 is a 6-axis inertial measurement unit that combines a 3-axis accelerometer and a 3-axis gyroscope.
+The MPU6050 driver provides two types of data access:
+
+1. **Raw Data**: 16-bit integer values directly from sensor registers
+2. **Scaled Data**: Converted to physical units using sensitivity scale factors
 
 ### Key Features
 
@@ -125,5 +160,7 @@ The MPU6050 is a 6-axis inertial measurement unit that combines a 3-axis acceler
 - Data stored in global structure for access by other tasks
 - Configurable measurement ranges via register writes
 - Raw 16-bit values accessible for further processing
+
+> **Note**: All data displayed on the LCD and stored in flash are **scaled values** converted to physical units (g for accelerometer, °/s for gyroscope, and °C for temperature). Raw 16-bit values are only used internally for calculations.
 
 🔗 [View MPU6050 Driver Source Code](https://github.com/rubin-khadka/STM32_MultiSensor_FlashStorage/blob/main/Core/Src/mpu6050.c)
