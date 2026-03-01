@@ -6,6 +6,14 @@
 
 ## Video Demonstrations
 
+https://github.com/user-attachments/assets/c837c958-dd8f-4fa7-b40e-5b68ad077332
+
+https://github.com/user-attachments/assets/fe075a1f-e6e7-49b2-a4ce-5543424432ca
+
+https://github.com/user-attachments/assets/758fb621-f78c-4816-bed2-fe901e667270
+
+https://github.com/user-attachments/assets/6bae0c0d-5979-433f-b4e0-cab14ed7c274
+
 ## Table of Contents
 - [Project Overview](#project-overview)
 - [Task Scheduling](#task-scheduling)
