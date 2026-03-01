@@ -7,6 +7,35 @@
 
 #include "utils.h"
 
+void itoa_32(uint32_t value, char *buffer)
+{
+    char *ptr = buffer;
+    char temp[12];  // Enough for 32-bit number (max 10 digits + sign + null)
+    uint8_t i = 0;
+
+    // Special case for zero
+    if(value == 0)
+    {
+        buffer[0] = '0';
+        buffer[1] = '\0';
+        return;
+    }
+
+    // Extract digits in reverse order
+    while(value > 0)
+    {
+        temp[i++] = (value % 10) + '0';
+        value /= 10;
+    }
+
+    // Reverse digits into buffer
+    while(i-- > 0)
+    {
+        *ptr++ = temp[i];
+    }
+    *ptr = '\0';
+}
+
 // Convert 16 bit integer to string
 void itoa_16(int16_t value, char *buffer)
 {

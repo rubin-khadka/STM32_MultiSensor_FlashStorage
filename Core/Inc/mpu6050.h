@@ -9,7 +9,7 @@
 #define MPU6050_H_
 
 #include "stm32f103xb.h"
-#include <stdint.h>
+#include "stdint.h"
 
 // MPU6050 I2C address (7-bit)
 #define MPU6050_ADDR    0x68

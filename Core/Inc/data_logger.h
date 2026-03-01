@@ -14,14 +14,13 @@
 typedef struct
 {
   float ds18b20_temp;       // 4 bytes
-  //float mpu6050_temp;       // 4 bytes
+  float mpu6050_temp;       // 4 bytes
   float accel_x;            // 4 bytes
   float accel_y;            // 4 bytes
   float accel_z;            // 4 bytes
   float gyro_x;             // 4 bytes
   float gyro_y;             // 4 bytes
   float gyro_z;             // 4 bytes
-  uint32_t timestamp;
 } LogEntry_t;
 
 // Logger status codes
@@ -34,5 +33,6 @@ typedef struct
 void DataLogger_Init(void);
 uint8_t DataLogger_SaveEntry(void);
 uint32_t DataLogger_ReadAll(void);
+uint32_t DataLogger_GetEntryCount(void);
 
 #endif /* INC_DATA_LOGGER_H_ */

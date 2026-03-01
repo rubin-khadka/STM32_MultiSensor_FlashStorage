@@ -15,6 +15,8 @@
 #include "lcd.h"
 #include "ds18b20.h"
 #include "w25q64.h"
+#include "data_logger.h"
+#include "stdio.h"
 
 static char uart_buf[32];
 
@@ -30,7 +32,7 @@ typedef struct
 static Feedback_t feedback = {0};
 
 // Show a message on LCD for specified duration
-void Feedback_Show(const char *line1, const char *line2, uint16_t duration_ms)
+static void Feedback_Show(const char *line1, const char *line2, uint16_t duration_ms)
 {
   // Copy line1
   int i = 0;
@@ -60,13 +62,6 @@ void Feedback_Show(const char *line1, const char *line2, uint16_t duration_ms)
   LCD_SendString(feedback.line1);
   LCD_SetCursor(1, 0);
   LCD_SendString(feedback.line2);
-
-  // Optional: Also send to UART for debugging
-  USART1_SendString("Feedback: ");
-  USART1_SendString(line1);
-  USART1_SendString(" - ");
-  USART1_SendString(line2);
-  USART1_SendString("\r\n");
 }
 
 // Check if feedback time has expired
@@ -82,18 +77,6 @@ void Task_Feedback_Update(void)
   {
     feedback.active = 0;
   }
-}
-
-// Force clear feedback immediately
-void Feedback_Clear(void)
-{
-  feedback.active = 0;
-}
-
-// Check if feedback is currently active
-uint8_t Feedback_IsActive(void)
-{
-  return feedback.active;
 }
 
 // Task to update UART output
@@ -177,4 +160,70 @@ void Task_LCD_Update(void)
   }
 }
 
+void Task_Button_Status(void)
+{
+  // Button 2 - SAVE data
+  if(g_button2_pressed)
+  {
+    uint8_t result = DataLogger_SaveEntry();
+
+    if(result == LOGGER_OK)
+    {
+      char line2[16] = "ENTRY #";
+      char num_str[6];
+      itoa_32(DataLogger_GetEntryCount(), num_str);
+
+      // Find the end of "ENTRY #" to append number
+      uint8_t i = 6; // length of "ENTRY #"
+      uint8_t j = 0;
+      while(num_str[j] && i < 15)
+      {
+        line2[i++] = num_str[j++];
+      }
+      line2[i] = '\0';
+
+      Feedback_Show("SAVED !!!", line2, 1000);
+    }
+    else if(result == LOGGER_FULL)
+    {
+      Feedback_Show("LOG FULL!", "ERASE NEEDED", 1000);
+    }
+    else
+    {
+      Feedback_Show("ERROR!", "SAVE FAILED", 1000);
+    }
+
+    g_button2_pressed = 0;
+  }
+
+  // Button 3 - READ data
+  if(g_button3_pressed)
+  {
+    uint32_t count = DataLogger_ReadAll();
+
+    if(count > 0)
+    {
+      char line2[16] = "ENTRIES #";
+      char num_str[6];
+      itoa_32(DataLogger_GetEntryCount(), num_str);
+
+      // Find the end of "ENTRY #" to append number
+      uint8_t i = 8; // length of "ENTRY #"
+      uint8_t j = 0;
+      while(num_str[j] && i < 15)
+      {
+        line2[i++] = num_str[j++];
+      }
+      line2[i] = '\0';
+
+      Feedback_Show("READ DONE !!!", line2, 1000);
+    }
+    else
+    {
+      Feedback_Show("NO DATA !!!", "SAVE DATA FIRST", 1000);
+    }
+
+    g_button3_pressed = 0;
+  }
+}
 

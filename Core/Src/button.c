@@ -248,24 +248,4 @@ void Button_NextMode(void)
   {
     current_mode = DISPLAY_MODE_TEMP_HUM;
   }
-
-  /*  // Debug message
-   USART1_SendString("Mode changed to: ");
-   switch(current_mode)
-   {
-   case DISPLAY_MODE_TEMP_HUM:
-   USART1_SendString("Temperature/Humidity\r\n");
-   break;
-
-   case DISPLAY_MODE_ACCEL:
-   USART1_SendString("Accelerometer\r\n");
-   break;
-
-   case DISPLAY_MODE_GYRO:
-   USART1_SendString("Gyroscope\r\n");
-   break;
-
-   default:
-   break;
-   }*/
 }

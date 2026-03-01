@@ -8,10 +8,11 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <stdint.h>
+#include "stdint.h"
 
 // Function Prototypes
 // Integer to string utility functions to display raw values
+void itoa_32(uint32_t value, char *buffer);
 void itoa_16(int16_t value, char *buffer);
 void itoa_8(uint8_t value, char *buffer);
 void format_value(uint8_t integer, uint8_t decimal, char *buffer, char unit);

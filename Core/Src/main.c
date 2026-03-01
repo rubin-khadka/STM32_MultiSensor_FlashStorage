@@ -2,7 +2,7 @@
  ******************************************************************************
  * @file           : main.c
  * @author         : Rubin Khadka
- * @brief          : STM32 Multi Sensor Data Logger Project main file
+ * @brief          : STM32 Multi Sensor Flash Data Logger Project main file
  ******************************************************************************
  */
 
@@ -11,7 +11,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stm32f103xb.h"
+
 #include "button.h"
 #include "lcd.h"
 #include "mpu6050.h"
@@ -23,7 +23,6 @@
 #include "dwt.h"
 #include "ds18b20.h"
 #include "w25q64.h"
-#include "stdio.h"
 #include "spi1.h"
 #include "data_logger.h"
 
@@ -41,10 +40,12 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+
 #define DS18B20_READ_TICKS  100
 #define MPU_READ_TICKS      5
 #define LCD_UPDATE_TICKS    10
 #define UART_UPDATE_TICKS   10
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -64,47 +65,7 @@ static void MX_SPI1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void Task_Button_Status(void)
-{
-  // Button 2 - SAVE data
-  if(g_button2_pressed)
-  {
-    Feedback_Show("SAVING...", "DATA", 1000);
 
-    uint8_t result = DataLogger_SaveEntry();
-
-    if(result == LOGGER_OK)
-    {
-      LCD_Clear();
-      LCD_SetCursor(0, 0);
-      LCD_SendString("SAVED!");
-      LCD_SetCursor(1, 0);
-      char msg[16];
-      sprintf(msg, "ENTRY #%lu", DataLogger_GetEntryCount());
-      LCD_SendString(msg);
-    }
-
-    g_button2_pressed = 0;
-  }
-
-  // Button 3 - READ data
-  if(g_button3_pressed)
-  {
-    Feedback_Show("READING...", "CHECK UART", 1000);
-
-    uint32_t count = DataLogger_ReadAll();
-
-    LCD_Clear();
-    LCD_SetCursor(0, 0);
-    LCD_SendString("READ DONE");
-    LCD_SetCursor(1, 0);
-    char msg[16];
-    sprintf(msg, "%lu ENTRIES", count);
-    LCD_SendString(msg);
-
-    g_button3_pressed = 0;
-  }
-}
 /* USER CODE END 0 */
 
 /**
@@ -138,6 +99,7 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+
   // Initialize ALL modules
   TIMER2_Init();
   USART1_Init();
@@ -163,10 +125,9 @@ int main(void)
 
   DWT_Delay_ms(2000);
 
-  // Add this after W25Q64_Init() in your main function
   W25Q64_Reset();
   W25Q64_Init();
-  W25Q64_EraseSector(1);
+  W25Q64_EraseSector(0);
   DWT_Delay_ms(500);
   DataLogger_Init();
 
@@ -174,6 +135,7 @@ int main(void)
 
   // Setup TIM3 for 10ms control loop
   TIMER3_SetupPeriod(10);  // 10ms period
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -221,6 +183,7 @@ int main(void)
 
     TIMER3_WaitPeriod();
   }
+
   /* USER CODE END 3 */
 }
 

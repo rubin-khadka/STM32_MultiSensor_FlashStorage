@@ -1,10 +1,16 @@
+/*
+ * w24q64.c
+ *
+ *  Created on: Feb 27, 2026
+ *      Author: Rubin Khadka
+ */
+
 #include "main.h"
 #include "W25q64.h"
 #include "spi1.h"
 #include "dwt.h"
 #include "lcd.h"
 #include "uart.h"
-#include "stdio.h"
 
 // W25Q64 Commands
 #define W25Q64_CMD_RESET            0x99
@@ -26,12 +32,10 @@
 void W25Q64_Reset(void)
 {
   SPI1_CS_LOW();
-
   SPI1_Transfer(W25Q64_CMD_RESET_ENABLE);   // Enable Reset
   SPI1_Transfer(W25Q64_CMD_RESET);          // Reset command
   while(SPI1->SR & SPI_SR_BSY);
   SPI1_CS_HIGH();
-
   DWT_Delay_ms(100);  // 100 MILLISECONDS
 }
 
@@ -41,9 +45,6 @@ void W25Q64_Init(void)
   uint8_t manufacturer_id = 0;
   uint8_t memory_type = 0;
   uint8_t capacity = 0;
-
-  // Small delay for power-up
-  DWT_Delay_ms(100);
 
   // Read full JEDEC ID
   SPI1_CS_LOW();
@@ -123,25 +124,13 @@ uint8_t W25Q64_ReadStatus(void)
   return status;
 }
 
-uint8_t W25Q64_ReadStatus2(void)
-{
-  uint8_t status;
-
-  SPI1_CS_LOW();
-  SPI1_Transfer(0x35);  // Read status register 2 command
-  status = SPI1_Transfer(0xFF);
-  SPI1_CS_HIGH();
-
-  return status;
-}
-
 void W25Q64_WriteEnable(void)
 {
   SPI1_CS_LOW();
   // Send write enable command (0x06)
   SPI1_Transfer(W25Q64_CMD_WRITE_ENABLE);  // 0x06
   SPI1_CS_HIGH();
-  DWT_Delay_ms(5);
+  DWT_Delay_us(5);
 }
 
 void W25Q64_WriteDisable(void)
@@ -149,7 +138,7 @@ void W25Q64_WriteDisable(void)
   SPI1_CS_LOW();
   SPI1_Transfer(W25Q64_CMD_WRITE_DISABLE);  // 0x04
   SPI1_CS_HIGH();
-  DWT_Delay_ms(5);
+  DWT_Delay_us(5);
 }
 
 void W25Q64_Read(uint32_t startPage, uint8_t offset, uint32_t size, uint8_t *rData)
@@ -209,7 +198,7 @@ uint32_t bytestowrite(uint32_t size, uint16_t offset)
 {
   if((size + offset) < 256)
   {
-    return size;           // Can write all in one page
+    return size;            // Can write all in one page
   }
   else
   {

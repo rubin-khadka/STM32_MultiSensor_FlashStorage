@@ -8,7 +8,7 @@
 #ifndef I2C2_H_
 #define I2C2_H_
 
-#include <stdint.h>
+#include "stdint.h"
 
 // I2C Status codes
 #define I2C_OK        0
